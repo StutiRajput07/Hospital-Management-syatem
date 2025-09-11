@@ -3,43 +3,40 @@
 - Implemented JWT-based authentication with multi-token management for secure and efficient session handling.
 - Designed a scalable architecture with dual frontends for users and admins, ensuring role-based access control and a user-friendly React.js interface.
 ```
-// src/OrdersBootstrap.js
+import React, { useState } from "react";
 import React, { useState } from "react";
 
-export default function OrdersBootstrap({ apiUrl = "http://localhost:8080/api/orders" }) {
-  const [orders, setOrders] = useState([]);
-  const [visible, setVisible] = useState(false);
+export default function CustomersTableButton({ apiUrl = "http://localhost:8080/api/customers" }) {
+  const [customers, setCustomers] = useState([]);
   const [error, setError] = useState(null);
+  const [visible, setVisible] = useState(false);
 
-  async function handleDisplayClick() {
+  async function handleFetchCustomers() {
     setError(null);
     try {
-      const res = await fetch(apiUrl, { method: "GET", headers: { "Accept": "application/json" } });
+      const res = await fetch(apiUrl);
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
       const data = await res.json();
-      setOrders(Array.isArray(data) ? data : []);
-      setVisible(true); // show table after data is fetched
+      setCustomers(Array.isArray(data) ? data : []);
+      setVisible(true); // show table only after data is fetched
     } catch (err) {
-      setOrders([]);
+      setError(err.message || "Failed to load customers");
+      setCustomers([]);
       setVisible(false);
-      setError(err.message || "Failed to load orders");
     }
   }
 
   return (
     <div className="container my-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3>Orders</h3>
-        <button className="btn btn-primary" onClick={handleDisplayClick}>
-          Display Orders
+      <h3>Customers</h3>
+
+      <div className="mb-3">
+        <button className="btn btn-primary" onClick={handleFetchCustomers}>
+          Display Customers
         </button>
       </div>
 
-      {error && (
-        <div className="alert alert-danger" role="alert">
-          Error: {error}
-        </div>
-      )}
+      {error && <div className="alert alert-danger">Error: {error}</div>}
 
       {visible && (
         <div className="table-responsive">
@@ -47,19 +44,29 @@ export default function OrdersBootstrap({ apiUrl = "http://localhost:8080/api/or
             <thead className="table-light">
               <tr>
                 <th style={{ width: 80 }}>#</th>
-                <th>Order Name</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Orders</th>
               </tr>
             </thead>
             <tbody>
-              {orders.length === 0 ? (
+              {customers.length === 0 ? (
                 <tr>
-                  <td colSpan="2" className="text-center">No orders found.</td>
+                  <td colSpan="4" className="text-center">No customers found.</td>
                 </tr>
               ) : (
-                orders.map((o) => (
-                  <tr key={o.orderId ?? o.id}>
-                    <td>{o.orderId ?? o.id}</td>
-                    <td>{o.orderName}</td>
+                customers.map((c) => (
+                  <tr key={c.id}>
+                    <td>{c.id}</td>
+                    <td>{c.name}</td>
+                    <td>{c.email}</td>
+                    <td>
+                      {Array.isArray(c.orders) && c.orders.length > 0 ? (
+                        c.orders.map(o => o.orderName).join(", ")
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
+                    </td>
                   </tr>
                 ))
               )}
